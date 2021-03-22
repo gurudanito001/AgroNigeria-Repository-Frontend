@@ -75,7 +75,7 @@ const ColorButton = withStyles((theme) => ({
 export default function ResetPassword() {
 
     const userContext = useContext(MyContext)
-    let loggedIn = userContext.user.loggedIn
+    let loggedIn = userContext.auth.loggedIn
     let history = useHistory();
     let { resetLink } = useParams();
     useEffect( ()=>{

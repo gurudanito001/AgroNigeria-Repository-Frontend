@@ -1,5 +1,7 @@
 import React, { useContext } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
+import axios from 'axios';
+import {serverURL} from '../config';
 import PersistentNavigation from '../reusableComponents/persistentNavigation';
 import DrawerNavigation from '../reusableComponents/drawerNavigation';
 import InputLabel from '@material-ui/core/InputLabel';
@@ -48,41 +50,53 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 
-export default function EditUser() {
+export default function EditUser( props ) {
   const userContext = useContext(MyContext)
   const classes = useStyles();
   const [state, setState] = React.useState({
-    firstName: '',
-    lastName: '',
-    role: '',
-    email: '',
+    id: props.user.id,
+    firstName: props.user.firstName,
+    lastName: props.user.lastName,
+    email: props.user.email,
+    role: props.user.role ? props.user.role : "",
   });
+  const [errorMessage, setErrorMessage] = React.useState("")
+  const [successMessage, setSuccessMessage] = React.useState("")
     
     const handleChange = (prop) => (event) => {
         setState({ ...state, [prop]: event.target.value });
     };
- 
-    const handleClickShowPassword = (prop) => {
+
+    const updateUser = ()=>{
+        axios.put(`${serverURL}/users/${state.id}`, state)
+        .then((res) => {
+            if (res.data.success) {
+                setSuccessMessage(res.data.message)
+                console.log( res )
+            }
+        })
+        .catch((error) => {
+            setErrorMessage(error.response.data.message || error.response.data)
+            console.log(error)
+        });
+    }
+
+    /* const handleClickShowPassword = (prop) => {
         console.log(prop)
         setState({ ...state, [prop]: !state[prop] });
     };
 
     const handleMouseDownPassword = (event) => {
         event.preventDefault();
-    };
+    }; */
 
   return (
-    <div className={`${classes.form} px-3 px-md-0`}>
-      {userContext.errors.addNewUser ?
-        <Alert severity="error" className="sticky-top">{userContext.errors.addNewUser}</Alert>
-        : null
-      }
-      {userContext.success.addNewUser ?
-        <Alert severity="success" className="sticky-top">{userContext.success.addNewUser}</Alert>
-        : null
-      }
+    <div className={`${classes.form} px-3 py-3`}>
+      {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
+      {successMessage ? <Alert severity="success">{successMessage}</Alert> : null}
+
       <header className="d-flex align-items-center mb-3 mt-3 mt-md-0">
-        <h3 className="d-inline mr-2 m-0 p-0">Add New User</h3>
+        <h3 className="d-inline mr-2 m-0 p-0">Edit User</h3>
       </header>
       <FormControl className={clsx(classes.margin, classes.textField)} variant="outlined"> 
         <TextField label="Firstname" size="small" variant="outlined" value={state.firstName} onChange={handleChange("firstName")} />
@@ -90,6 +104,10 @@ export default function EditUser() {
 
       <FormControl className={clsx(classes.margin, classes.textField)} variant="outlined"> 
         <TextField  label="Lastname" size="small" variant="outlined" value={state.lastName}  onChange={handleChange("lastName")} />
+      </FormControl>
+
+      <FormControl className={clsx(classes.margin, classes.textField)} variant="outlined"> 
+          <TextField label="Email" size="small" variant="outlined" value={state.email} onChange={handleChange("email")} />
       </FormControl>
 
       <FormControl variant="outlined" className={clsx(classes.margin, classes.textField)} margin='dense'>
@@ -105,17 +123,9 @@ export default function EditUser() {
           <MenuItem value="admin">Admin</MenuItem>
           <MenuItem value="editor">Editor</MenuItem>
         </Select>
-
-      </FormControl>
-      
-     
-       
-
-      <FormControl className={clsx(classes.margin, classes.textField)} variant="outlined"> 
-          <TextField label="Email" size="small" variant="outlined" value={state.email} onChange={handleChange("email")} />
       </FormControl>
 
-      <FormControl className={clsx(classes.margin, classes.textField)} variant="outlined"  margin='dense'> 
+      {/* <FormControl className={clsx(classes.margin, classes.textField)} variant="outlined"  margin='dense'> 
           <InputLabel htmlFor="newUserPassword1">Password</InputLabel> 
           <OutlinedInput
               size="small"
@@ -138,9 +148,9 @@ export default function EditUser() {
               }
               labelWidth={70}
           />
-      </FormControl>
+      </FormControl> */}
  
-      <FormControl className={clsx(classes.margin, classes.textField)} variant="outlined" margin='dense'> 
+      {/* <FormControl className={clsx(classes.margin, classes.textField)} variant="outlined" margin='dense'> 
 
           <InputLabel htmlFor="newUserPassword2">Confirm Password</InputLabel> 
           <OutlinedInput
@@ -164,13 +174,15 @@ export default function EditUser() {
               }
               labelWidth={135}
           />
-      </FormControl>
+      </FormControl> */}
+
       <Button variant="contained" size="large" color="primary" className={classes.submitBtn} 
         onClick={()=>{
-          userContext.clearMessages()
-          userContext.addNewUser(state)}}
+          console.log(state)
+          updateUser(state)
+        }}
       >
-          Add New User
+          Update User Info
       </Button>
     </div>
   );

@@ -11,7 +11,8 @@ import { MyContext } from './store/index';
 import Navigation from './components/navigation';
 import ViewUser from './reusableComponents/viewUser';
 import AddNewUser from './reusableComponents/addNewUser';
-import AllUsers from './reusableComponents/allUsers'
+import Users from './components/users';
+import SimpleSlide from './components/slidingComponent';
 
 
 function App() {
@@ -19,26 +20,21 @@ function App() {
   return (
     <MyProvider>
       <Router>
+        <Route path="/login" exact>
+          <Login />
+        </Route>
+        <Route path="/forgotPassword" exact>
+          <ForgotPassword />
+        </Route>
+        <Route path="/resetPassword/:resetLink" children={<ResetPassword />} exact />
         <Navigation>  
           <Switch>
-            <Route path="/login" exact>
-              <Login />
-            </Route>
-            <Route path="/forgotPassword" exact>
-              <ForgotPassword />
-            </Route>
-            <Route path="/resetPassword/:resetLink" children={<ResetPassword />} exact />
+            
             <Route path="/" exact>
               <Dashboard />
             </Route>
-            <Route path="/users" exact>
-              <AllUsers />
-            </Route>
-            <Route path="/users/new" exact>
-              <AddNewUser />
-            </Route>
-            <Route path="/users/view/:id" exact>
-              <ViewUser />
+            <Route path="/users">
+              <Users />
             </Route>
           </Switch>
         </Navigation> 

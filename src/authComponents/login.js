@@ -88,10 +88,9 @@ const BlueCheckbox = withStyles({
 export default function Login() {
 
     const userContext = useContext(MyContext)
-    let loggedIn = userContext.user.loggedIn
+    let loggedIn = userContext.auth.accessToken
     let history = useHistory();
     useEffect( ()=>{
-        //console.log(loggedIn)
         if(loggedIn){
             return history.push("/")
         }

@@ -7,31 +7,19 @@ import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogTitle from '@material-ui/core/DialogTitle';
 
 export default function AlertDialog( props ) {
-  /* const [open, setOpen] = React.useState(false); */
-
-  /* const handleClickOpen = () => {
-    setOpen(true);
-  }; */
-
-  /* const handleClose = () => {
-    setOpen(false);
-  }; */
 
   return (
     <div>
-      {/* <Button variant="outlined" color="primary" onClick={handleClickOpen}>
-        Open alert dialog
-      </Button> */}
       <Dialog
         open={props.openDialog}
-        /* onClose={handleClose} */
+        onClose={()=>{props.setOpenDialog(false)}} 
         aria-labelledby="alert-dialog-title"
         aria-describedby="alert-dialog-description"
       >
         <DialogTitle id="alert-dialog-title">{`Delete User Account`}</DialogTitle>
         <DialogContent>
           <DialogContentText id="alert-dialog-description">
-            Account with Email {props.email} will be deleted permanently.<br/>
+            Account with Email <strong>{props.email}</strong> will be deleted permanently.<br/>
             This action cannot be reversed
           </DialogContentText>
         </DialogContent>
@@ -39,7 +27,7 @@ export default function AlertDialog( props ) {
           <Button className="text-secondary" onClick={()=>{props.setOpenDialog(false)}}>
             Cancel
           </Button>
-          <Button className="text-danger" autoFocus>
+          <Button className="text-danger" autoFocus onClick={props.deleteUser}>
             Delete
           </Button>
         </DialogActions>

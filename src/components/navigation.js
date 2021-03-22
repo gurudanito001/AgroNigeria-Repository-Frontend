@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import PersistentNavigation from '../reusableComponents/persistentNavigation';
 import DrawerNavigation from '../reusableComponents/drawerNavigation';
+import { useLocation } from 'react-router-dom'
 
 
 const getWidth = () => window.innerWidth 
   || document.documentElement.clientWidth 
   || document.body.clientWidth;
  
-function useCurrentWidth() {
+  
+/* function useCurrentWidth() {
   // save current window width in the state object
   let [width, setWidth] = useState(getWidth());
 
@@ -33,11 +35,13 @@ function useCurrentWidth() {
   }, [])
 
   return width;
-} 
+}  */
+
+
 
 export default function Navigation (props) {
     let [width, setWidth] = useState(getWidth());
-
+    const location = useLocation()
     useEffect(() => {
         // timeoutId for debounce mechanism
         let timeoutId = null;
@@ -58,16 +62,29 @@ export default function Navigation (props) {
        
     }, []) ;
 
+    const checkForAuthRoutes = ()=>{
+        let isAuthRoute = false
+        let authRoutes = ['/login', '/forgotPassword', '/resetPassword']
+    
+        authRoutes.map( route =>{
+            if( location.pathname.startsWith(route)){
+                isAuthRoute = true
+            }
+        })
+        return isAuthRoute
+    }
+
     return (
         <>
             {
+                
                 width >= 768 ?
-                <div className="d-none d-md-block">
+                <div className={checkForAuthRoutes() ? "d-none" : "" }>  
                     <PersistentNavigation>
                         {props.children}
                     </PersistentNavigation>
                 </div> :
-                <div className="d-md-none">
+                <div className={checkForAuthRoutes() ? "d-none" : "" }>  
                     <DrawerNavigation>
                         {props.children}
                     </DrawerNavigation>

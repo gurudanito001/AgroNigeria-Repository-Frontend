@@ -65,6 +65,10 @@ export default function DrawerNavigation(props) {
     setState({ ...state, [anchor]: open });
   };
 
+  const closeDrawer = ()=>{
+    setState({ ...state, left: false });
+  }
+
   const handleMenu = (event) => {
     setAnchorEl(event.currentTarget);
   };
@@ -132,7 +136,7 @@ export default function DrawerNavigation(props) {
                 onClose={toggleDrawer(anchor, false)}
                 onOpen={toggleDrawer(anchor, true)}
             >
-                <NavLinks />
+                <NavLinks closeDrawer={closeDrawer}/>
             </SwipeableDrawer>
           </React.Fragment>
         ))}

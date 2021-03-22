@@ -71,7 +71,7 @@ const ColorButton = withStyles((theme) => ({
 export default function ForgotPassword() {
 
     const userContext = useContext(MyContext)
-    let loggedIn = userContext.user.loggedIn
+    let loggedIn = userContext.auth.accessToken
     let history = useHistory();
     useEffect( ()=>{
         if(loggedIn){

@@ -1,5 +1,6 @@
 import React, { useContext } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
+import axios from 'axios';
 import PersistentNavigation from '../reusableComponents/persistentNavigation';
 import DrawerNavigation from '../reusableComponents/drawerNavigation';
 import InputLabel from '@material-ui/core/InputLabel';
@@ -19,6 +20,8 @@ import VisibilityOff from '@material-ui/icons/VisibilityOff';
 import Alert from '@material-ui/lab/Alert';
 import '../App.css';
 import { MyContext } from '../store/';
+import RegisterUserValidation from '../validation/registerUser';
+import {serverURL} from '../config'
 
 const useStyles = makeStyles((theme) => ({
   formControl: {
@@ -48,9 +51,11 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 
-export default function AddNewUser() {
+export default function AddNewUser( props ) {
   const userContext = useContext(MyContext)
-  const classes = useStyles();
+  const [errorMessage, setErrorMessage] = React.useState("")
+  const [successMessage, setSuccessMessage] = React.useState("")
+ 
   const [state, setState] = React.useState({
     firstName: '',
     lastName: '',
@@ -61,28 +66,58 @@ export default function AddNewUser() {
     showPassword1: false,
     showPassword2: false,
   });
-    
-    const handleChange = (prop) => (event) => {
-        setState({ ...state, [prop]: event.target.value });
-    };
- 
-    const handleClickShowPassword = (prop) => {
-        console.log(prop)
-        setState({ ...state, [prop]: !state[prop] });
-    };
 
-    const handleMouseDownPassword = (event) => {
-        event.preventDefault();
-    };
+  const classes = useStyles();
+
+  const handleChange = (prop) => (event) => {
+    setState({ ...state, [prop]: event.target.value });
+  };
+
+  const handleClickShowPassword = (prop) => {
+    console.log(prop)
+    setState({ ...state, [prop]: !state[prop] });
+  };
+
+  const handleMouseDownPassword = (event) => {
+    event.preventDefault();
+  };
+
+  const clearMessages = ()=>{
+    setErrorMessage("");
+    setSuccessMessage("");
+  }
+
+  const addNewUser = (data) => {
+    let validationResult = RegisterUserValidation(data)
+    if (validationResult.isValid) {
+      axios.post(`${serverURL}/register`, validationResult.newUser)
+        .then((res) => {
+          console.log(res)
+          if (res.data.success) {
+            //props.getAllUsers()
+            setSuccessMessage(res.data.message)
+          }
+        })
+        .catch((error) => {
+          console.log(error)
+          setErrorMessage(error.response.data.message || error.response.data)
+        });
+    } else {
+      console.log(validationResult.errorMessage)
+      setErrorMessage(validationResult.errorMessage)
+    }
+  }
+    
+    
 
   return (
-    <div className={`${classes.form} px-3 px-md-0`}>
-      {userContext.errors.addNewUser ?
-        <Alert severity="error" className="sticky-top">{userContext.errors.addNewUser}</Alert>
+    <div className={`${classes.form} px-3 py-3`}>
+      {errorMessage ?
+        <Alert severity="error" className="sticky-top">{errorMessage}</Alert>
         : null
       }
-      {userContext.success.addNewUser ?
-        <Alert severity="success" className="sticky-top">{userContext.success.addNewUser}</Alert>
+      {successMessage ?
+        <Alert severity="success" className="sticky-top">{successMessage}</Alert>
         : null
       }
       <header className="d-flex align-items-center mb-3 mt-3 mt-md-0">
@@ -111,9 +146,6 @@ export default function AddNewUser() {
         </Select>
 
       </FormControl>
-      
-     
-       
 
       <FormControl className={clsx(classes.margin, classes.textField)} variant="outlined"> 
           <TextField label="Email" size="small" variant="outlined" value={state.email} onChange={handleChange("email")} />
@@ -171,8 +203,8 @@ export default function AddNewUser() {
       </FormControl>
       <Button variant="contained" size="large" color="primary" className={classes.submitBtn} 
         onClick={()=>{
-          userContext.clearMessages()
-          userContext.addNewUser(state)}}
+          clearMessages()
+          addNewUser(state)}}
       >
           Add New User
       </Button>

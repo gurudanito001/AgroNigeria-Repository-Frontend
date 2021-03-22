@@ -13,6 +13,9 @@ export default class MyProvider extends Component {
     constructor (props) {
         super(props);
         this.state = {
+            auth: {
+                accessToken: ""
+            },
             messages: {
                 errors: {
                     appError: "",
@@ -28,7 +31,7 @@ export default class MyProvider extends Component {
                 }
             },
             user:{
-                loggedIn: true,
+                loggedIn: false,
                 id: "",
                 firstName: "Daniel",
                 lastName: "Nwokocha",
@@ -41,31 +44,81 @@ export default class MyProvider extends Component {
     }
 
     componentDidMount = ()=>{
-        console.log("App has mounted")
-        /* this.getAllUsers() */
+        let accessToken = localStorage.getItem("accessToken")
+        if(accessToken){
+            let auth = this.state.auth
+            auth.accessToken = accessToken
+            this.setState({ auth: auth })
+        }
     } 
+
+    /* fetchMyData = () =>{
+        const id = '604f25b95caf7336ac097cc2'
+        const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Imd1cnVkYW5pdG8wMDFAZ21haWwuY29tIiwiaWF0IjoxNjE1OTExODY3LCJleHAiOjE2MTU5MTE4OTd9.1p8EJvrkQRnWzL6Z53coltyYoW2D6Gatyu_MEpszSLc'
+        axios.get(`${serverURL}/users/${id}`, {
+            headers: {
+                'Authorization': `token ${token}`
+            }
+        })
+        .then((res) => {
+            console.log(res.data)
+        })
+        .catch((error) => {
+            if(error.response.data.message.message === "jwt expired"){
+                console.log("jwt expired")
+            }
+        })
+    } */
+
+    refreshTokens = ( callbackFunc )=>{
+        // make the api call
+        // return the results of the call
+        // the component that made use of this function will make decision
+        // based on the result of the api call
+        const refreshToken = localStorage.getItem("refreshToken")
+        axios.post(`${serverURL}/refresh-token`, {refreshToken: refreshToken})
+        .then((res) => {
+            if(res.data.success){
+                let { accessToken, refreshToken } = res.data.data
+                let auth = this.state.auth
+                auth.accessToken = accessToken;
+                this.setState({ auth: auth })
+                localStorage.setItem("refreshToken", refreshToken);
+                localStorage.setItem("accessToken", accessToken);
+                if(callbackFunc){
+                    callbackFunc()
+                }
+            }
+        })
+        .catch((error) => {
+            console.log(error.response.data.message)
+        });
+    }
 
     authenticate = ( email, password )=>{
         let authValidation = ValidateAuthenticate(email, password)
         
         if(authValidation.isValid){
-            let user = this.state.user;
             axios.post(`${serverURL}/authenticate`, authValidation.loginDetails)
-                .then((res) => {
-                    if(res.data.success){
-                        user = { ...user, loggedIn: true };
-                        this.setState({ user: user })
-                    }
-                })
-                .catch((error) => {
-                    this.setError("login", error.response.data.message || error.response.data )
-                });
+            .then((res) => {
+                if(res.data.success){
+                    let { accessToken, refreshToken } = res.data.data
+                    let auth = this.state.auth
+                    auth.accessToken = accessToken;
+                    this.setState({ auth: auth })
+                    localStorage.setItem("refreshToken", refreshToken);
+                    localStorage.setItem("accessToken", accessToken);
+                }
+            })
+            .catch((error) => {
+                this.setError("login", error.response.data.message || error.response.data )
+            });
         }
         return this.setError("login", authValidation.errorMessage)
     }
 
     logout = () =>{
-        let user = this.state.user;
+        /* let user = this.state.user;
         let userKeys = Object.keys(user);
         userKeys.forEach(key => {
             if(key === "loggedIn"){
@@ -74,7 +127,14 @@ export default class MyProvider extends Component {
                 user[key] = ""
             }
         });
-        this.setState({ user: user }, ()=>{console.log(this.state.user)})
+        this.setState({ user: user }, ()=>{console.log(this.state.user)}) */
+
+        let auth = this.state.auth
+        auth.accessToken = ""
+        this.setState({ auth : auth })
+        localStorage.removeItem("refreshToken");
+        localStorage.removeItem("accessToken");
+
     }
 
     forgotPassword = ( email )=>{
@@ -139,17 +199,38 @@ export default class MyProvider extends Component {
         this.setState({ messages: messages })
     }
     getAllUsers = ()=>{
-        axios.get(`${serverURL}/users`)
-            .then((res) => {
-                console.log(res)
-                if(res.data.success){
-                    this.setState({ users: res.data.data })
-                }
-            })
-            .catch((error) => {
-                console.log(error)
-                this.setError("appError", error.response.data.message || error.response.data )
-            }); 
+        axios.get(`${serverURL}/users`, {
+            headers: {
+                'Authorization': `Bearer ${this.state.auth.accessToken}`
+            }
+        })
+        .then((res) => {
+            console.log(res)
+            if(res.data.success){
+                this.setState({ users: res.data.data })
+            }
+        })
+        .catch((error) => {
+            if(error.response.data.message.message === "jwt expired"){
+                console.log("jwt expired")
+            }
+            /* this.setError("appError", error.response.data.message || error.response.data ) */
+        }); 
+
+
+        /* axios.get(`${serverURL}/users/${id}`, {
+            headers: {
+                'Authorization': `token ${token}`
+            }
+        })
+        .then((res) => {
+            console.log(res.data)
+        })
+        .catch((error) => {
+            if(error.response.data.message.message === "jwt expired"){
+                console.log("jwt expired")
+            }
+        }) */
     }
     getOneUser = (id)=>{
         let allUsers = this.state.users;
@@ -161,7 +242,7 @@ export default class MyProvider extends Component {
         })
         return singleUser
     }
-    addNewUser = (data)=>{
+    /* addNewUser = (data)=>{
         let validationResult =  RegisterUserValidation(data)
         if(validationResult.isValid){
             axios.post(`${serverURL}/register`, validationResult.newUser)
@@ -180,12 +261,12 @@ export default class MyProvider extends Component {
             console.log(validationResult.errorMessage)
             this.setError("addNewUser", validationResult.errorMessage)
         }
-    }
+    } */
 
   render(){
     return(
       <MyContext.Provider value={{
-        user: this.state.user,
+        auth: this.state.auth,
         errors: this.state.messages.errors,
         success: this.state.messages.success,
         users: this.state.users,
@@ -194,9 +275,10 @@ export default class MyProvider extends Component {
         logout: this.logout,
         forgotPassword: this.forgotPassword,
         resetPassword: this.resetPassword,
-        addNewUser: this.addNewUser,
+        //addNewUser: this.addNewUser,
         clearMessages: this.clearAllMessages,
-        getOneUser: this.getOneUser
+        getOneUser: this.getOneUser,
+        refreshTokens: this.refreshTokens
       }}>
           {this.props.children}
       </MyContext.Provider>
